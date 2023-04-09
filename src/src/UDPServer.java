@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,12 +17,16 @@ import java.io.InputStreamReader;
 
 public class UDPServer {
 	private static final int PORT = 9876;
+	private static final int TCPPORT = 12345;
+
     private static final int MAX_CONNECTIONS = 25;
     private static final int THREAD_TIMEOUT_SECONDS = 60;
 
     public static void main(String[] args) throws Exception {
-        // Create server socket and thread pool
+        // Create server socket and thread pool for UDP
         DatagramSocket serverSocket = new DatagramSocket(PORT);
+        // socket for TCP initial connection
+        ServerSocket serverSocketTCP = new ServerSocket(TCPPORT);
         ThreadPoolExecutor threadPool = new ThreadPoolExecutor(
                 MAX_CONNECTIONS,
                 MAX_CONNECTIONS,
@@ -36,7 +42,7 @@ public class UDPServer {
             System.out.print("Select file to transfer (enter '100' for 100 MB file or '250' for 250 MB file): ");
             String input = consoleInput.readLine();
             if (input.equals("100")) {
-                fileName = "D:\\SEPTIMO SEMESTRE\\INFRAESTRUCTURA COMPUTACIONAL\\UDP_server\\src\\src\\prueba.txt";
+                fileName = "D:\\SEPTIMO SEMESTRE\\INFRAESTRUCTURA COMPUTACIONAL\\UDP_server\\src\\src\\archivo100.txt";
             } else if (input.equals("250")) {
                 fileName = "file250mb.dat";
             } else {
@@ -47,15 +53,13 @@ public class UDPServer {
             // Loop to accept client connections and transfer selected file
             while (true) {
                 byte[] receiveData = new byte[1024];
-                DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-                serverSocket.receive(receivePacket);
-                InetAddress clientAddress = receivePacket.getAddress();
-                int clientPort = receivePacket.getPort();
+                Socket clientSocket = serverSocketTCP.accept();
+                InetAddress clientAddress =clientSocket.getInetAddress();
+                int clientPort=12345;
 
                 // Create new FileTransferTask for client connection and submit to thread pool
-                FileTransferTask transferTask = new FileTransferTask(serverSocket, receivePacket, clientAddress, clientPort, fileName);
+                FileTransferTask transferTask = new FileTransferTask(serverSocket, clientAddress, clientPort, fileName);
                 threadPool.submit(transferTask);
-                System.out.print(false);
 
             }
         }

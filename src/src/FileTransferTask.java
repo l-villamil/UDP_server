@@ -12,9 +12,8 @@ public class FileTransferTask implements Runnable {
     private int clientPort;
     private String fileName;
 
-    public FileTransferTask(DatagramSocket socket, DatagramPacket receivePacket, InetAddress clientAddress, int clientPort, String fileName) {
+    public FileTransferTask(DatagramSocket socket, InetAddress clientAddress, int clientPort, String fileName) {
         this.socket = socket;
-        this.receivePacket = receivePacket;
         this.clientAddress = clientAddress;
         this.clientPort = clientPort;
         this.fileName = fileName;
@@ -34,7 +33,7 @@ public class FileTransferTask implements Runnable {
             while ((bytesRead = bufferedInput.read(sendData, 0, sendData.length)) != -1) {
                 DatagramPacket sendPacket = new DatagramPacket(sendData, bytesRead, clientAddress, clientPort);
                 socket.send(sendPacket);
-            }
+            }	
             // Close input stream and socket
 //            bufferedInput.close();
 //            socket.close();
@@ -49,7 +48,6 @@ public class FileTransferTask implements Runnable {
             String logEntry = receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort() + " - " + fileName + " - " + new Date() + "\n";
             bufferedWriter.write(logEntry);
             bufferedWriter.close();
-            System.out.print(false);
 
         } catch (IOException e) {
             e.printStackTrace();

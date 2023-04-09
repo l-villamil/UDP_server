@@ -2,6 +2,8 @@ package src;
 
 import java.net.DatagramSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
@@ -12,27 +14,36 @@ public class FileReceiver {
     public static void main(String[] args) {
         DatagramSocket socket = null;
         FileOutputStream fos = null;
-        String fileName = "D:\\SEPTIMO SEMESTRE\\INFRAESTRUCTURA COMPUTACIONAL\\UDP_server\\src\\src\\prueba.txt";
-
+        final String SERVER_ADDRESS = "localhost";
         try {
             // crear el socket UDP
             socket = new DatagramSocket(12345);
-            
+            Socket socketTCP = new Socket(SERVER_ADDRESS, 12345);
+            // Get the output stream from the socket
+            OutputStream outputStream = socketTCP.getOutputStream();
+
+            // Send data to the server
+            String message = "Hello, server!";
+            outputStream.write(message.getBytes());
+
+            // Close the output stream and socket
+            outputStream.close();
+            socketTCP.close();
+
             // crear un buffer para recibir los paquetes
             byte[] buffer = new byte[1024];
 
             // crear un paquete para recibir los datos
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            
-            
-            DatagramPacket packet1 = new DatagramPacket(fileName.getBytes(), fileName.getBytes().length, InetAddress.getLocalHost(), 9876);
-            socket.send(packet1);
-            // recibir el nombre del archivo
-            socket.receive(packet);
-            String filename = new String(packet.getData(), 0, packet.getLength());
 
-            // crear el archivo de destino
-            File file = new File(filename);
+            // crear un archivo de registro
+            File logFile = new File("received_packets.log");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(logFile));
+
+//            // recibir el nombre del archivo
+//            socket.receive(packet);
+//            String filename = new String(packet.getData(), 0, packet.getLength());
+            File file = new File("recibido");
             fos = new FileOutputStream(file);
 
             // recibir el archivo
@@ -46,10 +57,19 @@ public class FileReceiver {
                 }
 
                 // escribir los datos del paquete en el archivo
+                String packetData = new String(packet.getData(), 0, packet.getLength());
                 fos.write(packet.getData(), 0, packet.getLength());
+                
+                // escribir los datos del paquete en el archivo de registro
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+                writer.write("Se ha recibido el paquete: "+packetData+" a las"+dateFormat.format(new Date())+
+                		" del servidor: "+packet.getAddress()+" de tamaño: "+packet.getLength());
+                writer.newLine();
             }
 
-            // cerrar el archivo
+            // cerrar el archivo de registro y el archivo
+            writer.close();
+
             fos.close();
         } catch (IOException e) {
             e.printStackTrace();
@@ -61,4 +81,3 @@ public class FileReceiver {
         }
     }
 }
-
